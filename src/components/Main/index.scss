@@ -1,0 +1,48 @@
+$def_size: 32px;
+$gap: 4px;
+$bradius: 8px;
+
+$color_empty: #00000050;
+$color_item: #00000075;
+
+%item {
+  cursor: grab;
+  line-height: $def_size - 2px;
+  height: $def_size;
+  border: 1px solid $color_item;
+  border-radius: $bradius;
+  animation: fade 0.5s linear;
+}
+
+@for $i from 1 through 3 {
+  .main-item-X#{$i} {
+    @extend %item;
+    width: ($def_size * $i) + $gap * ($i - 1);
+  }
+}
+
+.main {
+  &-item {
+    &-hidden {
+      visibility: hidden;
+    }
+    &-empty {
+      width: $def_size;
+      height: $def_size;
+      line-height: $def_size;
+      color: $color_empty;
+      border: 1px dotted $color_empty;
+      border-radius: $bradius;
+      // transition: all 0.33s;
+      animation: fade 0.5s linear;
+    }
+  }
+
+  &-body {
+    padding: 16px;
+    display: grid;
+    gap: $gap;
+    grid-template-columns: repeat(3, 32px);
+    grid-template-rows: repeat(3, 32px);
+  }
+}

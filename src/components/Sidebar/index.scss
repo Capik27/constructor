@@ -1,0 +1,64 @@
+$def_size: 32px;
+$gap: 4px;
+$bradius: 8px;
+
+$trans_time: 0.33s;
+$anim_time: 0.5s;
+
+$color_item_bg: #00000020;
+$color_item_border: #00000075;
+
+$color_side_bg: #00000010;
+$color_side_border: #00000040;
+
+%item {
+  cursor: grab;
+  line-height: $def_size - 2px;
+  height: $def_size;
+  border: 1px solid $color_item_border;
+  background-color: transparent;
+  border-radius: $bradius;
+  transition: all $trans_time;
+  animation: fade $anim_time linear;
+  &:hover {
+    background-color: $color_item_bg;
+  }
+}
+
+@for $i from 1 through 3 {
+  .sidebar-item-X#{$i} {
+    @extend %item;
+    width: ($def_size * $i) + $gap * ($i - 1);
+  }
+}
+
+.sidebar {
+  width: 150px;
+  height: 100vh;
+  border-right: 1px solid $color_side_border;
+  background-color: $color_side_bg;
+
+  &-controls {
+    padding: 12px 4px;
+    display: flex;
+    gap: $gap;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $gap;
+    padding: $gap;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
