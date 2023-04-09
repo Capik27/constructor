@@ -6,29 +6,24 @@ import {
 	setCurrentDrag,
 	setBoard,
 	resetCurrent,
-	resetBase,
 	swapBaseItems,
+	generateBase,
 } from "../../store/dragSlice";
 import { SizeInput } from "./SizeInput/SizeInput";
 import { NetTypes } from "../../types/interfaces";
 
 export function Sidebar() {
 	const dispatch = useDispatch();
-	const gameStarted = useSelector((state: any) => state.controls.gameStarted);
+	const { netSize, gameStarted } = useSelector((state: any) => state.controls);
 	const current = useSelector((state: any) => state.drag.current);
 	const elems: NetTypes[] = useSelector((state: any) => state.drag.base);
 
 	const switchHandler = (value: boolean) => {
-		value && dispatch(resetBase());
+		//value && dispatch(resetBase());
+		value && dispatch(generateBase(netSize));
 		dispatch(setGameStarted(value));
 	};
 
-	//.sort(sortId)
-	function sortId(a: NetTypes, b: NetTypes) {
-		return a.id - b.id;
-	}
-
-	console.log("elems", elems);
 	/////////////////////////////////////////////////////////
 	// DRAG
 	/////////////////////////////////////////////////////////
@@ -36,7 +31,6 @@ export function Sidebar() {
 	const dragHandlerStart = (e: any, item: any) => {
 		dispatch(setCurrentDrag(item));
 		dispatch(setBoard("side"));
-		// console.log("start", item);
 	};
 	const dragHandlerLeave = (e: any) => {
 		e.target.classList.remove("dragover");
@@ -48,14 +42,12 @@ export function Sidebar() {
 	const dragHandlerEnd = (e: any, item: any) => {
 		e.target.classList.remove("dragover");
 		dispatch(resetCurrent());
-		console.log("end", item);
 	};
 	const dragHandlerDrop = (e: any, item: any) => {
 		e.target.classList.remove("dragover");
 		e.preventDefault();
 
 		dispatch(swapBaseItems({ current, target: item }));
-		// console.log("drop", item);
 	};
 
 	return (
@@ -70,7 +62,7 @@ export function Sidebar() {
 						return (
 							<div
 								key={item.id}
-								className={`sidebar-item-X${item.size.x}`}
+								className={`sidebar-item-X${item.size.x} sidebar-item-Y${item.size.y}`}
 								onDragStart={(e) => dragHandlerStart(e, item)}
 								onDragLeave={(e) => dragHandlerLeave(e)}
 								onDragOver={(e) => dragHandlerOver(e)}

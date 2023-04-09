@@ -1,9 +1,4 @@
-$def_size: 32px;
-$gap: 4px;
-$bradius: 8px;
-
-$trans_time: 0.33s;
-$anim_time: 0.5s;
+@import "../../utils/stylevars.scss";
 
 $color_item_bg: #00000020;
 $color_item_border: #00000075;
@@ -13,10 +8,12 @@ $color_side_border: #00000040;
 
 %item {
   cursor: grab;
-  line-height: $def_size - 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: $line_size;
   height: $def_size;
   border: 1px solid $color_item_border;
-  background-color: transparent;
   border-radius: $bradius;
   transition: all $trans_time;
   animation: fade $anim_time linear;
@@ -25,40 +22,57 @@ $color_side_border: #00000040;
   }
 }
 
-@for $i from 1 through 3 {
+@for $i from 1 through $MAX_COUNT {
   .sidebar-item-X#{$i} {
     @extend %item;
     width: ($def_size * $i) + $gap * ($i - 1);
+    grid-column: span $i;
+  }
+  .sidebar-item-Y#{$i} {
+    height: ($def_size * $i) + $gap * ($i - 1);
+    grid-row: span $i;
   }
 }
 
+$min_w: ($def_size * $MIN_COUNT) + $gap * ($MIN_COUNT - 1) + 2 * $gap;
+$max_w: ($def_size * $MAX_COUNT) + $gap * ($MAX_COUNT - 1) + 2 * $gap;
+
 .sidebar {
-  width: 150px;
+  min-width: $max_w;
+  max-width: $max_w;
   height: 100vh;
   border-right: 1px solid $color_side_border;
   background-color: $color_side_bg;
 
   &-controls {
     padding: 12px 4px;
-    display: flex;
     gap: $gap;
+    display: flex;
     align-items: center;
     justify-content: center;
   }
 
   &-inner {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat($MAX_COUNT, $def_size);
+
     gap: $gap;
     padding: $gap;
-  }
-}
 
-@keyframes fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+    // position: relative;
+    // &:before {
+    //   content: "";
+    //   position: absolute;
+    //   width: 100vw;
+    //   top: 0;
+    //   border-bottom: 1px solid black;
+    // }
+    // &:after {
+    //   content: "";
+    //   position: absolute;
+    //   width: 100vw;
+    //   bottom: 0;
+    //   border-bottom: 1px solid black;
+    // }
   }
 }

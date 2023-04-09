@@ -1,7 +1,12 @@
-@import "./Drag.scss";
+@import "./utils/Drag.scss";
+@import "./utils/animations.scss";
 
 .App {
   display: flex;
   text-align: center;
   overflow-y: hidden;
+}
+
+.swap {
+  animation: swap 1s linear;
 }

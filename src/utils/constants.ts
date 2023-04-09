@@ -1,0 +1,5 @@
+const MIN_NET_SIZE = 3;
+const MAX_NET_SIZE = 16;
+const MAX_FIGURE_SIZE = 5;
+
+export { MIN_NET_SIZE, MAX_NET_SIZE, MAX_FIGURE_SIZE };

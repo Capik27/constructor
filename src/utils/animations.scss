@@ -1,0 +1,22 @@
+@keyframes fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes swap {
+    0% {
+        background-color: none;
+    }
+
+    50% {
+        background-color: rgb(206, 143, 6);
+    }
+
+    100% {
+        background-color: none;
+    }
+}

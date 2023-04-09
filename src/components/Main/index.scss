@@ -1,48 +1,63 @@
-$def_size: 32px;
-$gap: 4px;
-$bradius: 8px;
+@import "../../utils/stylevars.scss";
 
 $color_empty: #00000050;
 $color_item: #00000075;
 
 %item {
-  cursor: grab;
-  line-height: $def_size - 2px;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: $line_size;
   height: $def_size;
   border: 1px solid $color_item;
-  border-radius: $bradius;
-  animation: fade 0.5s linear;
+  border-radius: $net_bradius;
+  animation: fade $anim_time linear;
 }
 
-@for $i from 1 through 3 {
+@for $i from 1 through $MAX_COUNT {
   .main-item-X#{$i} {
     @extend %item;
-    width: ($def_size * $i) + $gap * ($i - 1);
+    width: ($def_size * $i) + $net_gap * ($i - 1);
+
+    // position: relative;
+    // @if ($i > 1) {
+    //   &:before {
+    //     content: "¤";
+    //     font-size: 18px;
+    //     line-height: 9px;
+    //     position: absolute;
+    //     top: $gap;
+    //     left: $gap;
+    //   }
+    // }
+  }
+  .main-item-Y#{$i} {
+    height: ($def_size * $i) + $net_gap * ($i - 1);
   }
 }
 
 .main {
   &-item {
     &-hidden {
-      visibility: hidden;
+      opacity: 0;
+      cursor: default;
     }
     &-empty {
       width: $def_size;
       height: $def_size;
-      line-height: $def_size;
+      line-height: $line_size;
       color: $color_empty;
       border: 1px dotted $color_empty;
-      border-radius: $bradius;
-      // transition: all 0.33s;
-      animation: fade 0.5s linear;
+      border-radius: $net_bradius;
+      animation: fade $anim_time linear;
     }
   }
 
   &-body {
-    padding: 16px;
+    padding: $body_padding;
     display: grid;
-    gap: $gap;
-    grid-template-columns: repeat(3, 32px);
-    grid-template-rows: repeat(3, 32px);
+    grid-template-columns: repeat(auto-fit, $def_size);
+    gap: $net_gap;
   }
 }

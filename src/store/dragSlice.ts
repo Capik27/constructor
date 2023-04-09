@@ -1,25 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { NetTypes, NumberXYLimit } from "../types/interfaces";
+import { NetTypes } from "../types/interfaces";
+import generateFigures from "../utils/generateFigures";
+import { MIN_NET_SIZE } from "../utils/constants";
 
-const sd = "ABCDEFGHIKLMNOPQRSTVXYZ";
-const base: NetTypes[] = new Array(8);
-for (let i = 0; i < base.length; i++) {
-	let id = i + 1;
-
-	let m = Math.random();
-	let x_size: NumberXYLimit = m < 0.33 ? 1 : m < 0.66 ? 2 : 3;
-
-	base[i] = {
-		id: id,
-		name: sd[id],
-		empty: true,
-		hidden: false,
-		size: { x: x_size, y: 1 },
-	};
-}
+const base: NetTypes[] = generateFigures(MIN_NET_SIZE);
 
 const initialState = {
-	base: base,
+	base,
 	current: null,
 	board: null,
 };
@@ -34,6 +21,9 @@ const dragSlice = createSlice({
 		},
 		resetBase(state) {
 			state.base = initialState.base;
+		},
+		generateBase(state, action) {
+			state.base = generateFigures(action.payload);
 		},
 		setCurrentDrag(state, action) {
 			state.current = action.payload;
@@ -76,6 +66,7 @@ export default dragSlice.reducer;
 export const {
 	resetCurrent,
 	resetBase,
+	generateBase,
 	setCurrentDrag,
 	setBoard,
 	removeBaseItem,

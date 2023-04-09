@@ -1,13 +1,20 @@
 import { useDispatch, useSelector } from "react-redux";
 import "./index.scss";
 import { useState, useEffect } from "react";
-import { NetTypes } from "../../types/interfaces";
+import { NetTypes, SizeXY } from "../../types/interfaces";
 import { removeBaseItem, replaceBaseItem } from "../../store/dragSlice";
 
 function initNet(size: number = 3) {
 	const newNet = new Array(size * size);
 	for (let i = 0; i < newNet.length; i++) {
-		newNet[i] = { id: i, name: `${i}`, empty: true };
+		newNet[i] = {
+			id: i,
+			name: `${i}`,
+			empty: true,
+			hidden: false,
+			size: { x: 1, y: 1 },
+			parentId: null,
+		};
 	}
 	return newNet;
 }
@@ -16,7 +23,6 @@ export function Main() {
 	const dispatch = useDispatch();
 	const { netSize, gameStarted } = useSelector((state: any) => state.controls);
 	const [net, setNet] = useState<NetTypes[]>([]);
-	const [dropTargets, setDropTargets] = useState<Array<HTMLElement | null>>([]);
 
 	const sizeStyle = {
 		gridTemplateColumns: `repeat(${netSize}, 32px)`,
@@ -28,72 +34,115 @@ export function Main() {
 	}, [gameStarted]);
 
 	/////////////////////////////////////////////////////////
-	// DRAG
+	// CHECKS
 	/////////////////////////////////////////////////////////
 
 	const current = useSelector((state: any) => state.drag.current);
 
-	const cleanDragTargets = () => {
-		for (let i = 0; i < dropTargets.length; i++) {
-			dropTargets[i]?.classList.remove("dragover");
-			dropTargets[i]?.classList.remove("warning");
+	const checkEdge = (id: number, size: SizeXY) => {
+		const ostX = netSize - (id % netSize);
+		for (let i = 0; i < size.x; i++) {
+			const ostY = id + i + size.y * netSize - netSize <= netSize * netSize;
+			if (!ostY) return false;
 		}
-		setDropTargets([]);
+		return ostX >= size.x;
 	};
 
-	// Если елемент влазит в поле
-	const checkEdgeX = (id: number, sizeX: number) => {
-		const ost = netSize - (id % netSize);
-		return ost >= sizeX;
-	};
-	// Если после елемента нет ничего
-	const checkClosest = (id: number, sizeX: number) => {
-		if (!net[id].empty) {
-			if (net[id].size?.x === sizeX) {
+	const checkClosest = (id: number, size: SizeXY) => {
+		if (!net[id]?.empty && !net[id]?.hidden) {
+			if (net[id].size?.x === size.x && net[id].size?.y === size.y) {
 				return true;
 			} else {
 				return false;
 			}
 		} else {
-			for (let i = 1; i < sizeX; i++) {
-				if (!net[id + i].empty) return false;
+			const step = netSize;
+			for (let i = 0; i < size.x; i++) {
+				if (!net[id + i]?.empty) return false;
+				if (size.y > 1) {
+					for (let j = 1; j < size.y; j++) {
+						if (!net[id + i + j * step]?.empty) return false;
+					}
+				}
 			}
 			return true;
 		}
 	};
-	const checkX = (id: number, sizeX: number) => {
-		return checkEdgeX(id, sizeX) && checkClosest(id, sizeX);
+
+	const checkXY = (id: number, size: SizeXY) => {
+		// console.log(id, "checkXY");
+		return checkEdge(id, size) && checkClosest(id, size);
 	};
 
-	const addClassToTargets = (cname: string, id: number, sizeX: number) => {
-		const targets: Array<HTMLElement | null> = [];
-		for (let i = 0, el; i < sizeX; i++) {
-			el = document.getElementById(String(id + i));
-			el?.classList.add(cname);
-			targets.push(el);
-			if ((id + i + 1) % netSize === 0) break; // находит правую границу сетки
-		}
-		setDropTargets(targets);
+	const getHiddenParentId = (id: number) => {
+		// if (net[id]?.hidden) {
+		// 	console.log(id, "hidden");
+		// } else {
+		// 	console.log(id, "NOT");
+		// }
+		return net[id]?.hidden ? net[id]?.parentId : net[id]?.id;
 	};
-	///////////////////////////////////////////////////////
+
+	/////////////////////////////////////////////////////////
+	// CLASSES
+	/////////////////////////////////////////////////////////
+
+	const addClassToTargets = (cname: string, id: number, size: SizeXY) => {
+		for (let i = 0, el; i < size.x; i++) {
+			let currentId_X = getHiddenParentId(id + i);
+			el = document.getElementById(String(currentId_X));
+			el?.classList.add(cname);
+			if (size.y > 1) {
+				const step = netSize;
+				for (let j = 1; j < size.y; j++) {
+					let y_id = id + i + j * step;
+					let currentId_Y = getHiddenParentId(y_id);
+					el = document.getElementById(String(currentId_Y));
+					el?.classList.add(cname);
+					if (id + i + j * netSize - netSize > netSize * netSize) break; // находит нижнюю границу сетки
+				}
+			}
+			if ((id + i + 1) % netSize === 0) break;
+		}
+	};
+
+	const removeClassFromTargets = (id: number, size: SizeXY) => {
+		for (let i = 0, el; i < size.x; i++) {
+			el = document.getElementById(String(getHiddenParentId(id + i)));
+			el?.classList.remove("dragover");
+			el?.classList.remove("warning");
+
+			if (size.y > 1) {
+				const step = netSize;
+				for (let j = 1, y_id; j < size.y; j++) {
+					y_id = id + i + j * step;
+					el = document.getElementById(String(getHiddenParentId(y_id)));
+					el?.classList.remove("dragover");
+					el?.classList.remove("warning");
+				}
+			}
+		}
+	};
+
+	/////////////////////////////////////////////////////////
+	// DRAG
+	/////////////////////////////////////////////////////////
+
 	const dragHandlerStart = (e: any, item: any) => {
 		e.preventDefault();
 	};
-	const dragHandlerLeave = (e: any) => {
-		cleanDragTargets();
-
-		// e.target.classList.remove("warning");
+	const dragHandlerLeave = (e: any, item: any) => {
+		removeClassFromTargets(item.id, current.size);
 	};
 
 	const dragHandlerOver = (e: any, item: any) => {
 		e.preventDefault();
-		const sizeX = current.size.x;
+		let itemID = item.id;
 
-		if (checkX(item.id, sizeX)) {
-			addClassToTargets("dragover", item.id, sizeX);
+		if (checkXY(item.id, current.size)) {
+			addClassToTargets("dragover", itemID, current.size);
 		} else {
-			addClassToTargets("warning", item.id, sizeX);
-			//e.target.classList.add("warning");
+			addClassToTargets("warning", itemID, current.size);
 		}
 	};
 
@@ -101,40 +150,54 @@ export function Main() {
 		e.target.classList.remove("dragover");
 		e.target.classList.remove("warning");
 	};
+
 	const dragHandlerDrop = (e: any, item: any) => {
-		cleanDragTargets();
 		e.preventDefault();
 
-		const sizeX = current.size.x;
-		if (!checkX(item.id, sizeX)) return;
+		removeClassFromTargets(item.id, current.size);
+		if (!checkXY(item.id, current.size)) return;
 
 		setNet((prevNet) => {
-			const build = { ...current, id: item.id, empty: false };
 			const newNet = [...prevNet];
-			newNet[item.id] = build;
 
-			if (current.size.x > 1) {
-				for (let i = 1; i < current.size.x; i++) {
-					newNet[item.id + i] = {
+			for (let i = 0; i < current.size.x; i++) {
+				newNet[item.id + i] = {
+					...current,
+					id: item.id + i,
+					empty: false,
+					hidden: i != 0, // родительский элемент не скрыт
+					parentId: item.id,
+				};
+				for (let j = 1; j < current.size.y; j++) {
+					newNet[item.id + i + j * netSize] = {
 						...current,
-						id: item.id + i,
+						id: item.id + i + j * netSize,
 						empty: false,
 						hidden: true,
+						parentId: item.id,
 					};
 				}
 			}
 
-			console.log("build", build);
-
+			// Проверка на пустоту элемента в который идет дроп
 			if (item.empty) {
 				dispatch(removeBaseItem(current.id));
 			} else {
 				dispatch(replaceBaseItem({ current, target: item }));
+
+				// const swapClass = "swap";
+				// let el1 = document.getElementById(String(current.id));
+				// let el2 = document.getElementById(String(item.id));
+				// el1?.classList.add(swapClass);
+				// el2?.classList.add(swapClass);
+				// const timer = setTimeout(() => {
+				// 	el1?.classList.remove(swapClass);
+				// 	el2?.classList.remove(swapClass);
+				// 	clearTimeout(timer);
+				// }, 1000);
 			}
 			return newNet;
 		});
-
-		console.log("drop2", item, "current", current);
 	};
 
 	return (
@@ -152,10 +215,10 @@ export function Main() {
 											? "main-item-empty"
 											: item.hidden
 											? "main-item-hidden"
-											: `main-item-X${item.size.x}`
+											: `main-item-X${item.size.x} main-item-Y${item.size.y}`
 									}
 									onDragStart={(e) => dragHandlerStart(e, item)}
-									onDragLeave={(e) => dragHandlerLeave(e)}
+									onDragLeave={(e) => dragHandlerLeave(e, item)}
 									onDragOver={(e) => dragHandlerOver(e, item)}
 									onDragEnd={(e) => dragHandlerEnd(e)}
 									onDrop={(e) => dragHandlerDrop(e, item)}
