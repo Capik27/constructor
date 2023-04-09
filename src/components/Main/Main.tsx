@@ -13,7 +13,7 @@ function initNet(size: number = 3) {
 			empty: true,
 			hidden: false,
 			size: { x: 1, y: 1 },
-			parentId: null,
+			parentId: i,
 		};
 	}
 	return newNet;
@@ -48,14 +48,22 @@ export function Main() {
 		return ostX >= size.x;
 	};
 
+	const checkSizes = (id: number, size: SizeXY) => {
+		return net[id].size?.x === size.x && net[id].size?.y === size.y;
+	};
+
 	const checkClosest = (id: number, size: SizeXY) => {
-		if (!net[id]?.empty && !net[id]?.hidden) {
-			if (net[id].size?.x === size.x && net[id].size?.y === size.y) {
+		//Если слот ЗАНЯТ ИЛИ СКРЫТ = навели на фигуру в поле
+		if (!net[id]?.empty || net[id]?.hidden) {
+			//Если размеры совпадают
+			if (checkSizes(id, size)) {
 				return true;
 			} else {
 				return false;
 			}
 		} else {
+			//Если слот СВОБОДЕН = навели на пустой слот
+			//Проверка ближайших слотов под размер фигуры
 			const step = netSize;
 			for (let i = 0; i < size.x; i++) {
 				if (!net[id + i]?.empty) return false;
@@ -65,21 +73,16 @@ export function Main() {
 					}
 				}
 			}
-			return true;
+			//Если преград другими фигурами нет, то запускаем функцию проверки границ поля
+			return checkEdge(id, size);
 		}
 	};
 
 	const checkXY = (id: number, size: SizeXY) => {
-		// console.log(id, "checkXY");
-		return checkEdge(id, size) && checkClosest(id, size);
+		return checkClosest(id, size);
 	};
 
 	const getHiddenParentId = (id: number) => {
-		// if (net[id]?.hidden) {
-		// 	console.log(id, "hidden");
-		// } else {
-		// 	console.log(id, "NOT");
-		// }
 		return net[id]?.hidden ? net[id]?.parentId : net[id]?.id;
 	};
 
@@ -88,6 +91,12 @@ export function Main() {
 	/////////////////////////////////////////////////////////
 
 	const addClassToTargets = (cname: string, id: number, size: SizeXY) => {
+		if (checkSizes(id, size)) {
+			document
+				.getElementById(String(net[id].parentId))
+				?.classList.add("dragover");
+			return;
+		}
 		for (let i = 0, el; i < size.x; i++) {
 			let currentId_X = getHiddenParentId(id + i);
 			el = document.getElementById(String(currentId_X));
@@ -107,6 +116,12 @@ export function Main() {
 	};
 
 	const removeClassFromTargets = (id: number, size: SizeXY) => {
+		if (checkSizes(id, size)) {
+			document
+				.getElementById(String(net[id].parentId))
+				?.classList.remove("dragover");
+			return;
+		}
 		for (let i = 0, el; i < size.x; i++) {
 			el = document.getElementById(String(getHiddenParentId(id + i)));
 			el?.classList.remove("dragover");
@@ -160,41 +175,37 @@ export function Main() {
 		setNet((prevNet) => {
 			const newNet = [...prevNet];
 
-			for (let i = 0; i < current.size.x; i++) {
-				newNet[item.id + i] = {
-					...current,
-					id: item.id + i,
-					empty: false,
-					hidden: i != 0, // родительский элемент не скрыт
-					parentId: item.id,
-				};
-				for (let j = 1; j < current.size.y; j++) {
-					newNet[item.id + i + j * netSize] = {
+			const genNewNet = (id: number) => {
+				for (let i = 0; i < current.size.x; i++) {
+					newNet[id + i] = {
 						...current,
-						id: item.id + i + j * netSize,
+						id: id + i,
 						empty: false,
-						hidden: true,
-						parentId: item.id,
+						hidden: i != 0, // родительский элемент не скрыт
+						parentId: id,
 					};
+					for (let j = 1; j < current.size.y; j++) {
+						newNet[id + i + j * netSize] = {
+							...current,
+							id: id + i + j * netSize,
+							empty: false,
+							hidden: true,
+							parentId: id,
+						};
+					}
 				}
-			}
+			};
 
+			// Если дошли до сюда, то наша фигура полностью помещается на площадке,
+			// либо мы указателем в фигуре на поле.
+			//
 			// Проверка на пустоту элемента в который идет дроп
-			if (item.empty) {
+			if (net[item.parentId].empty) {
+				genNewNet(item.id);
 				dispatch(removeBaseItem(current.id));
 			} else {
+				genNewNet(item.parentId);
 				dispatch(replaceBaseItem({ current, target: item }));
-
-				// const swapClass = "swap";
-				// let el1 = document.getElementById(String(current.id));
-				// let el2 = document.getElementById(String(item.id));
-				// el1?.classList.add(swapClass);
-				// el2?.classList.add(swapClass);
-				// const timer = setTimeout(() => {
-				// 	el1?.classList.remove(swapClass);
-				// 	el2?.classList.remove(swapClass);
-				// 	clearTimeout(timer);
-				// }, 1000);
 			}
 			return newNet;
 		});
