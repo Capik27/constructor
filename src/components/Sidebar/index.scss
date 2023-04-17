@@ -38,6 +38,7 @@ $min_w: ($def_size * $MIN_COUNT) + $gap * ($MIN_COUNT - 1) + 2 * $gap;
 $max_w: ($def_size * $MAX_COUNT) + $gap * ($MAX_COUNT - 1) + 2 * $gap;
 
 .sidebar {
+  overflow-y: auto;
   min-width: $max_w;
   max-width: $max_w;
   height: 100vh;
@@ -49,12 +50,13 @@ $max_w: ($def_size * $MAX_COUNT) + $gap * ($MAX_COUNT - 1) + 2 * $gap;
     gap: $gap;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-around;
   }
 
   &-inner {
     display: grid;
     grid-template-columns: repeat($MAX_COUNT, $def_size);
+    grid-auto-flow: dense;
 
     gap: $gap;
     padding: $gap;

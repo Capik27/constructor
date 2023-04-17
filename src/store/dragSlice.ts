@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { NetTypes } from "../types/interfaces";
-import generateFigures from "../utils/generateFigures";
+import generateFigures from "../models/generateFigures";
 import { MIN_NET_SIZE } from "../utils/constants";
 
 const base: NetTypes[] = generateFigures(MIN_NET_SIZE);

@@ -38,6 +38,8 @@ $color_item: #00000075;
 }
 
 .main {
+  padding: $main_padding;
+
   &-item {
     &-hidden {
       opacity: 0;
@@ -55,8 +57,8 @@ $color_item: #00000075;
   }
 
   &-body {
-    padding: $body_padding;
     display: grid;
+    // border: 1px solid black;
     grid-template-columns: repeat(auto-fit, $def_size);
     gap: $net_gap;
   }
